@@ -1,19 +1,22 @@
 
 Red []
 
-htmlize: function [ b ][
+htmlize: function [ b d ][
   lifo: copy []
   tree: [
     collect [
       any [
-        ahead [word! block! block!]
+        ['if set getw get-word! [if (select d getw) [into tree] | block!]]
+        | ahead [word! block! block!]
         set tag word!
         (insert lifo tag)
         keep (rejoin ["<" tag " "])
         into [any [
           set argname word!
-          set argval string!
-          keep (rejoin [argname "=" {"} argval {"} ])
+          [
+            set argval string! keep (rejoin [argname "=" {"} argval {"} ])
+            | set argval get-word! keep (rejoin [argname "=" {"} (select d argval) {"} ])
+          ]
           | set argname word!
           'none
           keep (rejoin [argname])
@@ -28,6 +31,7 @@ htmlize: function [ b ][
         into tree
         keep (rejoin ["</" (first lifo) ">"])
         (remove lifo)]
+        | [set getw get-word! keep (select d getw)]
         | keep string!
       ]
     ]
@@ -45,12 +49,14 @@ htmlize: function [ b ][
 html: [
   html [lang "en-US"] [
     head [
-      title [ "Page Title" ]
+      title [ :title ]
     ]
-    body [
-      div [class "party" id "unique" special none] ["Hello"]
+    if :content [
+      body [
+        div [class "party" id :uniq special none] [:content]
+      ]
     ]
   ]
 ]
 
-print htmlize html
+print htmlize html [uniq "abc" conten "<hello>Hi</hello>" title "Page Title"]
