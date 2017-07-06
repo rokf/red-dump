@@ -1,7 +1,11 @@
 
 Red []
 
-htmlize: function [ b d ][
+htmlize: function [
+  "Generates a HTML string from a parse block DSL."
+  b [block!] "html block"
+  d [block!] "data block"
+] [
   concat: function [b] [
     a: copy []
     foreach el b [
@@ -22,10 +26,34 @@ htmlize: function [ b d ][
       | set argname word! 'none keep (rejoin [" " argname])
     ]
   ]
+  render-foreach: function [bl db fw d] [
+    cb: copy []
+    foreach x db [
+      insert d (reduce [fw x])
+      html: (htmlize bl d)
+      append cb html
+      remove/part d 2
+      probe d
+    ]
+    return (concat cb)
+  ]
+  render-foreach-pair: function [bl db fw1 fw2 d] [
+    cb: copy []
+    foreach [x y] db [
+      insert d (reduce [fw1 x fw2 y])
+      html: (htmlize bl d)
+      append cb html
+      remove/part d 4
+      probe d
+    ]
+    return (concat cb)
+  ]
   tree: [
     collect [
       any [
-        ['if set getw get-word! [if (select d getw) [into tree] | block!]]
+        ['foreach set forw1 word! set forw2 word! set datab get-word! set forb block! keep (render-foreach-pair forb (select d datab) forw1 forw2 d) ]
+        | ['foreach set forw word! set datab get-word! set forb block! keep (render-foreach forb (select d datab) forw d) ]
+        | ['if set getw get-word! [if (select d getw) [into tree] | block!]]
         | ahead [lit-word! block!] ; only open tag and attributes
         set tag lit-word!
         keep (rejoin ["<" tag])
@@ -54,6 +82,8 @@ htmlize: function [ b d ][
   ]
   concat (parse b tree)
 ]
+
+; example
 
 html: [
   html [lang "en-US"] [
